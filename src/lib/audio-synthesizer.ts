@@ -61,6 +61,7 @@ export class AudioSynthesizer {
   private analyser: AnalyserNode | null = null
   private isPlaying = false
   private scheduledNotes: { source: OscillatorNode; envelope: GainNode }[] = []
+  private completionCallback: (() => void) | null = null
 
   constructor() {
     if (typeof window !== 'undefined' && window.AudioContext) {
@@ -95,6 +96,11 @@ export class AudioSynthesizer {
       }
     })
     this.scheduledNotes = []
+    
+    if (this.completionCallback) {
+      this.completionCallback()
+      this.completionCallback = null
+    }
   }
 
   async playSequence(
@@ -113,6 +119,7 @@ export class AudioSynthesizer {
 
     const beatDuration = 60 / theme.tempo
     let currentTime = this.audioContext.currentTime + 0.1
+    let endTime = currentTime
 
     for (let i = 0; i < notes.length; i++) {
       if (!this.isPlaying) break
@@ -131,7 +138,19 @@ export class AudioSynthesizer {
       )
 
       currentTime += duration
+      endTime = currentTime
     }
+
+    const timeoutDuration = (endTime - this.audioContext.currentTime) * 1000 + 100
+    setTimeout(() => {
+      if (this.isPlaying) {
+        this.isPlaying = false
+        if (this.completionCallback) {
+          this.completionCallback()
+          this.completionCallback = null
+        }
+      }
+    }, timeoutDuration)
   }
 
   private playNote(
@@ -433,6 +452,10 @@ export class AudioSynthesizer {
 
   isCurrentlyPlaying(): boolean {
     return this.isPlaying
+  }
+
+  setCompletionCallback(callback: () => void) {
+    this.completionCallback = callback
   }
 }
 

@@ -60,14 +60,17 @@ function App() {
     }
 
     try {
-      setIsPlaying(true)
       const parsed = parseTunePattern(tunePattern)
       
       if (parsed.notes.length === 0) {
         toast.error('Could not parse tune pattern')
-        setIsPlaying(false)
         return
       }
+
+      setIsPlaying(true)
+      globalSynthesizer.setCompletionCallback(() => {
+        setIsPlaying(false)
+      })
 
       await globalSynthesizer.playSequence(
         parsed.notes,
@@ -84,7 +87,6 @@ function App() {
       toast.error('Playback failed', {
         description: 'Please try again'
       })
-    } finally {
       setIsPlaying(false)
     }
   }
@@ -126,19 +128,24 @@ function App() {
 
   const handlePlaySaved = async (music: SavedMusic) => {
     try {
-      setIsPlaying(true)
       const themeToUse = THEMES[music.theme] || theme
+      
+      setIsPlaying(true)
+      globalSynthesizer.setCompletionCallback(() => {
+        setIsPlaying(false)
+      })
+      
       await globalSynthesizer.playSequence(
         music.parsedTune.notes,
         music.instrument,
         themeToUse,
         music.baseKey
       )
+      
       toast.success('Playing saved music!')
     } catch (error) {
       console.error('Playback error:', error)
       toast.error('Playback failed')
-    } finally {
       setIsPlaying(false)
     }
   }

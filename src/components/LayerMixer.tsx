@@ -81,6 +81,9 @@ export function LayerMixer({ savedMusic }: LayerMixerProps) {
 
     try {
       setIsPlaying(true)
+      globalSynthesizer.setCompletionCallback(() => {
+        setIsPlaying(false)
+      })
       
       const playPromises = safeLayers.map(async (layer) => {
         const themeToUse = THEMES[layer.music.theme] || THEMES.playful
@@ -101,7 +104,6 @@ export function LayerMixer({ savedMusic }: LayerMixerProps) {
     } catch (error) {
       console.error('Playback error:', error)
       toast.error('Playback failed')
-    } finally {
       setIsPlaying(false)
     }
   }
