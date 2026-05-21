@@ -50,11 +50,11 @@
 
   --radius: 1rem;
 
-  --font-sans: "Quicksand";
+  --font-sans: Quicksand;
 
-  --font-serif: "Alegreya";
+  --font-serif: Alegreya;
 
-  --font-mono: "JetBrains Mono";
+  --font-mono: JetBrains Mono;
 
   --chart-1: oklch(0.68 0.14 340);
 
