@@ -235,7 +235,7 @@ function App() {
                       <Label htmlFor="theme" className="text-base font-semibold">
                         Theme / Mood
                       </Label>
-                      <Select value={selectedTheme} onValueChange={setSelectedTheme}>
+                      <Select value={selectedTheme} onValueChange={setSelectedTheme} disabled={isPlaying}>
                         <SelectTrigger id="theme">
                           <SelectValue />
                         </SelectTrigger>
@@ -256,7 +256,7 @@ function App() {
                       <Label htmlFor="instrument" className="text-base font-semibold">
                         Instrument
                       </Label>
-                      <Select value={selectedInstrument} onValueChange={(v) => setSelectedInstrument(v as InstrumentType)}>
+                      <Select value={selectedInstrument} onValueChange={(v) => setSelectedInstrument(v as InstrumentType)} disabled={isPlaying}>
                         <SelectTrigger id="instrument">
                           <SelectValue />
                         </SelectTrigger>
@@ -287,6 +287,7 @@ function App() {
                       max={200}
                       step={1}
                       className="w-full"
+                      disabled={isPlaying}
                     />
                     <p className="text-xs text-muted-foreground">
                       Adjust playback speed (40 BPM = Very Slow, 200 BPM = Very Fast)
@@ -306,6 +307,7 @@ function App() {
                         value={baseKey}
                         onChange={(e) => setBaseKey(parseInt(e.target.value) || 60)}
                         className="w-24 font-mono"
+                        disabled={isPlaying}
                       />
                       <span className="text-sm text-muted-foreground self-center">
                         (C4 = 60, Higher = Higher Pitch)

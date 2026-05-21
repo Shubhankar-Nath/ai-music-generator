@@ -84,9 +84,13 @@ export class AudioSynthesizer {
 
   stop() {
     this.isPlaying = false
-    this.scheduledNotes.forEach(({ source }) => {
+    const now = this.audioContext?.currentTime || 0
+    this.scheduledNotes.forEach(({ source, envelope }) => {
       try {
-        source.stop()
+        envelope.gain.cancelScheduledValues(now)
+        envelope.gain.setValueAtTime(envelope.gain.value, now)
+        envelope.gain.linearRampToValueAtTime(0, now + 0.01)
+        source.stop(now + 0.02)
       } catch (e) {
       }
     })

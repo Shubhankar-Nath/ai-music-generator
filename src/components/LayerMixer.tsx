@@ -178,6 +178,7 @@ export function LayerMixer({ savedMusic }: LayerMixerProps) {
                           variant="ghost"
                           className="h-8 w-8 flex-shrink-0"
                           onClick={() => handleRemoveLayer(layer.id)}
+                          disabled={isPlaying}
                         >
                           <Trash className="h-4 w-4 text-destructive" />
                         </Button>
@@ -192,6 +193,7 @@ export function LayerMixer({ savedMusic }: LayerMixerProps) {
                           max={1}
                           step={0.01}
                           className="flex-1"
+                          disabled={isPlaying}
                         />
                         <span className="text-xs text-muted-foreground font-mono w-12 text-right">
                           {Math.round(layer.volume * 100)}%
