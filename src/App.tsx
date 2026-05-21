@@ -1,358 +1,421 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
-import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Lightning, MusicNotes, Waveform, BookOpen, Sparkle } from '@phosphor-icons/react'
+import { Play, Stop, FloppyDisk, Trash, Waveform, MusicNotes, Guitar, Sparkle } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
-import { ChordProgressionCard, MelodyCard, CompositionCard } from '@/components/MusicCards'
-import { buildMusicTheoryPrompt } from '@/lib/music-theory'
-import type { ChordProgression, Melody, Composition } from '@/lib/types'
+import { parseTunePattern, getSyllableExamples } from '@/lib/tune-parser'
+import { globalSynthesizer, THEMES, type InstrumentType, type Theme } from '@/lib/audio-synthesizer'
+import type { SavedMusic } from '@/lib/types'
+
+const INSTRUMENTS: { value: InstrumentType; label: string; icon: string }[] = [
+  { value: 'piano', label: 'Piano', icon: '🎹' },
+  { value: 'flute', label: 'Flute', icon: '🎵' },
+  { value: 'strings', label: 'Strings', icon: '🎻' },
+  { value: 'synth', label: 'Synth', icon: '🎛️' },
+  { value: 'guitar', label: 'Guitar', icon: '🎸' },
+  { value: 'bass', label: 'Bass', icon: '🎸' },
+  { value: 'organ', label: 'Organ', icon: '🎹' },
+]
 
 function App() {
-  const [prompt, setPrompt] = useState('')
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [activeTab, setActiveTab] = useState('generate')
-  
-  const [chordProgressions, setChordProgressions] = useKV<ChordProgression[]>('chord-progressions', [])
-  const [melodies, setMelodies] = useKV<Melody[]>('melodies', [])
-  const [compositions, setCompositions] = useKV<Composition[]>('compositions', [])
+  const [tunePattern, setTunePattern] = useState('')
+  const [selectedTheme, setSelectedTheme] = useState<string>('playful')
+  const [selectedInstrument, setSelectedInstrument] = useState<InstrumentType>('piano')
+  const [baseKey, setBaseKey] = useState(60)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [savedMusic, setSavedMusic] = useKV<SavedMusic[]>('saved-music', [])
 
-  const safeChordProgressions = chordProgressions || []
-  const safeMelodies = melodies || []
-  const safeCompositions = compositions || []
+  const safeSavedMusic = savedMusic || []
+  const examples = getSyllableExamples()
+  const theme = THEMES[selectedTheme] || THEMES.playful
 
-  const handleGenerate = async () => {
-    if (!prompt.trim()) {
-      toast.error('Please enter a prompt')
+  useEffect(() => {
+    globalSynthesizer.init()
+  }, [])
+
+  const handlePlay = async () => {
+    if (!tunePattern.trim()) {
+      toast.error('Please enter a tune pattern')
       return
     }
 
-    setIsGenerating(true)
     try {
-      const musicPrompt = buildMusicTheoryPrompt(prompt)
-      const response = await window.spark.llm(musicPrompt, 'gpt-4o', true)
-      const result = JSON.parse(response)
-
-      if (result.type === 'chords') {
-        const newProgression: ChordProgression = {
-          id: Date.now().toString(),
-          name: prompt.slice(0, 50) + (prompt.length > 50 ? '...' : ''),
-          chords: result.content.chords || [],
-          romanNumerals: result.content.romanNumerals || [],
-          key: result.key,
-          scale: result.scale,
-          mood: result.mood,
-          explanation: result.explanation,
-          genre: result.content.genre,
-        }
-        setChordProgressions((current) => [newProgression, ...(current || [])])
-        toast.success('Chord progression generated!', {
-          description: `Created ${newProgression.chords.length} chord progression in ${newProgression.key}`
-        })
-        setActiveTab('library')
-      } else if (result.type === 'melody') {
-        const newMelody: Melody = {
-          id: Date.now().toString(),
-          name: prompt.slice(0, 50) + (prompt.length > 50 ? '...' : ''),
-          notes: result.content.notes || [],
-          rhythm: result.content.rhythm || [],
-          key: result.key,
-          scale: result.scale,
-          mood: result.mood,
-          explanation: result.explanation,
-        }
-        setMelodies((current) => [newMelody, ...(current || [])])
-        toast.success('Melody generated!', {
-          description: `Created melody in ${newMelody.key} ${newMelody.scale}`
-        })
-        setActiveTab('library')
-      } else if (result.type === 'composition') {
-        const newComposition: Composition = {
-          id: Date.now().toString(),
-          name: result.content.name || prompt.slice(0, 50),
-          sections: result.content.sections || [],
-          key: result.key,
-          tempo: result.content.tempo || 'Medium',
-          timeSignature: result.content.timeSignature || '4/4',
-          mood: result.mood,
-          genre: result.content.genre,
-        }
-        setCompositions((current) => [newComposition, ...(current || [])])
-        toast.success('Composition generated!', {
-          description: `Created ${newComposition.sections.length}-section composition`
-        })
-        setActiveTab('library')
-      } else {
-        toast.info('Music Theory Explanation', {
-          description: result.explanation.slice(0, 100) + '...'
-        })
+      setIsPlaying(true)
+      const parsed = parseTunePattern(tunePattern)
+      
+      if (parsed.notes.length === 0) {
+        toast.error('Could not parse tune pattern')
+        setIsPlaying(false)
+        return
       }
 
-      setPrompt('')
+      await globalSynthesizer.playSequence(
+        parsed.notes,
+        selectedInstrument,
+        theme,
+        baseKey
+      )
+
+      toast.success('Playing your music!', {
+        description: `${parsed.notes.length} notes with ${selectedInstrument}`
+      })
     } catch (error) {
-      console.error('Generation error:', error)
-      toast.error('Generation failed', {
-        description: 'Please try again with a different prompt'
+      console.error('Playback error:', error)
+      toast.error('Playback failed', {
+        description: 'Please try again'
       })
     } finally {
-      setIsGenerating(false)
+      setIsPlaying(false)
     }
   }
 
-  const deleteChordProgression = (id: string) => {
-    setChordProgressions((current) => (current || []).filter(p => p.id !== id))
-    toast.success('Deleted chord progression')
+  const handleStop = () => {
+    globalSynthesizer.stop()
+    setIsPlaying(false)
+    toast.info('Playback stopped')
   }
 
-  const deleteMelody = (id: string) => {
-    setMelodies((current) => (current || []).filter(m => m.id !== id))
-    toast.success('Deleted melody')
+  const handleSave = () => {
+    if (!tunePattern.trim()) {
+      toast.error('Please enter a tune pattern to save')
+      return
+    }
+
+    const parsed = parseTunePattern(tunePattern)
+    if (parsed.notes.length === 0) {
+      toast.error('Could not parse tune pattern')
+      return
+    }
+
+    const newMusic: SavedMusic = {
+      id: Date.now().toString(),
+      name: tunePattern.slice(0, 30) + (tunePattern.length > 30 ? '...' : ''),
+      tunePattern,
+      parsedTune: parsed,
+      instrument: selectedInstrument,
+      theme: selectedTheme,
+      baseKey,
+      createdAt: Date.now(),
+    }
+
+    setSavedMusic((current) => [newMusic, ...(current || [])])
+    toast.success('Music saved!', {
+      description: 'Added to your library'
+    })
   }
 
-  const deleteComposition = (id: string) => {
-    setCompositions((current) => (current || []).filter(c => c.id !== id))
-    toast.success('Deleted composition')
+  const handlePlaySaved = async (music: SavedMusic) => {
+    try {
+      setIsPlaying(true)
+      const themeToUse = THEMES[music.theme] || theme
+      await globalSynthesizer.playSequence(
+        music.parsedTune.notes,
+        music.instrument,
+        themeToUse,
+        music.baseKey
+      )
+      toast.success('Playing saved music!')
+    } catch (error) {
+      console.error('Playback error:', error)
+      toast.error('Playback failed')
+    } finally {
+      setIsPlaying(false)
+    }
   }
 
-  const totalItems = safeChordProgressions.length + safeMelodies.length + safeCompositions.length
+  const handleDelete = (id: string) => {
+    setSavedMusic((current) => (current || []).filter(m => m.id !== id))
+    toast.success('Deleted from library')
+  }
+
+  const loadExample = (example: string) => {
+    setTunePattern(example)
+    toast.info('Example loaded', {
+      description: 'Click Play to hear it'
+    })
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-7xl">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-6xl">
         <motion.header
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-8 sm:mb-12 text-center"
         >
           <div className="flex items-center justify-center gap-3 mb-3">
-            <MusicNotes size={40} weight="fill" className="text-accent" />
-            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
+            <Waveform size={44} weight="fill" className="text-accent" />
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight">
               Harmonia
             </h1>
           </div>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            AI-Powered Music Composition Assistant
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
+            AI-Powered Music Synthesis Engine
           </p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Generate chord progressions, melodies, and complete compositions using advanced music theory
+          <p className="text-sm text-muted-foreground mt-2">
+            Create music from tune patterns, themes, and instruments
           </p>
         </motion.header>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 h-12">
-            <TabsTrigger value="generate" className="text-base gap-2">
-              <Lightning weight="fill" />
-              <span className="hidden sm:inline">Generate</span>
-            </TabsTrigger>
-            <TabsTrigger value="library" className="text-base gap-2">
-              <BookOpen weight="fill" />
-              <span className="hidden sm:inline">Library</span>
-              {totalItems > 0 && (
-                <span className="ml-1 px-2 py-0.5 bg-accent/20 text-accent rounded-full text-xs font-mono">
-                  {totalItems}
-                </span>
-              )}
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="generate" className="space-y-6">
+        <div className="grid gap-8 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="max-w-3xl mx-auto"
             >
-              <div className="bg-card/50 backdrop-blur-sm rounded-xl p-6 sm:p-8 border border-border/50 shadow-lg">
-                <div className="flex items-center gap-2 mb-4">
-                  <Sparkle className="text-accent" weight="fill" />
-                  <h2 className="text-xl font-semibold">Describe Your Music</h2>
-                </div>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Tell the AI what you want to create. Be as specific or creative as you like!
-                </p>
-                
-                <Textarea
-                  id="music-prompt"
-                  placeholder="Examples:&#10;• A sad piano chord progression in C minor&#10;• Happy melody in G major pentatonic scale&#10;• Jazz chord progression with 7th chords&#10;• Energetic rock composition with verse and chorus&#10;• Mysterious ambient soundscape in dorian mode"
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  className="min-h-[140px] text-base resize-none font-medium"
-                  disabled={isGenerating}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                      handleGenerate()
-                    }
-                  }}
-                />
-                
-                <div className="flex items-center justify-between mt-4">
-                  <span className="text-xs text-muted-foreground">
-                    Tip: Press Cmd/Ctrl + Enter to generate
-                  </span>
-                  <Button
-                    onClick={handleGenerate}
-                    disabled={isGenerating || !prompt.trim()}
-                    size="lg"
-                    className="glow-primary gap-2"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                        >
-                          <Sparkle weight="fill" />
-                        </motion.div>
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Lightning weight="fill" />
-                        Generate Music
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
+              <Card className="border-border/50 shadow-lg bg-card/80 backdrop-blur-sm">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Sparkle className="text-accent" weight="fill" />
+                    <CardTitle>Compose Your Music</CardTitle>
+                  </div>
+                  <CardDescription>
+                    Enter tune patterns, select a theme, and choose your instrument
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="tune-pattern" className="text-base font-semibold">
+                      Tune Pattern
+                    </Label>
+                    <Input
+                      id="tune-pattern"
+                      placeholder="e.g., pa pa..para paa paa OR sa ri ga ma pa"
+                      value={tunePattern}
+                      onChange={(e) => setTunePattern(e.target.value)}
+                      className="text-base font-mono"
+                      disabled={isPlaying}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Use syllables like: sa, ri, ga, ma, pa, dha, ni (or) do, re, mi, fa, sol, la, ti
+                      <br />
+                      Add dots (..) for shorter notes, dashes (-) for longer notes
+                    </p>
+                  </div>
 
-              <div className="mt-8 grid gap-4 sm:grid-cols-3">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="p-4 bg-primary/5 border border-primary/20 rounded-lg"
-                >
-                  <MusicNotes className="text-primary mb-2" size={24} weight="fill" />
-                  <h3 className="font-semibold text-sm mb-1">Chord Progressions</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Generate harmonic foundations with Roman numeral analysis
-                  </p>
-                </motion.div>
-                
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="p-4 bg-accent/5 border border-accent/20 rounded-lg"
-                >
-                  <Waveform className="text-accent mb-2" size={24} weight="fill" />
-                  <h3 className="font-semibold text-sm mb-1">Melodies</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Create melodic lines with rhythm patterns and scales
-                  </p>
-                </motion.div>
-                
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="p-4 bg-secondary/5 border border-secondary/20 rounded-lg"
-                >
-                  <BookOpen className="text-foreground mb-2" size={24} weight="fill" />
-                  <h3 className="font-semibold text-sm mb-1">Full Compositions</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Complete song structures with multiple sections
-                  </p>
-                </motion.div>
-              </div>
-            </motion.div>
-          </TabsContent>
-
-          <TabsContent value="library" className="space-y-6">
-            {totalItems === 0 ? (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="text-center py-16 px-4"
-              >
-                <MusicNotes size={64} weight="thin" className="mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-xl font-semibold mb-2">No music yet</h3>
-                <p className="text-muted-foreground mb-6">
-                  Start generating chord progressions, melodies, and compositions to build your library
-                </p>
-                <Button onClick={() => setActiveTab('generate')} variant="default" className="gap-2">
-                  <Lightning weight="fill" />
-                  Create Your First Music
-                </Button>
-              </motion.div>
-            ) : (
-              <div className="space-y-8">
-                {safeChordProgressions.length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      <MusicNotes className="text-primary" weight="fill" />
-                      <h2 className="text-2xl font-semibold">Chord Progressions</h2>
-                      <span className="text-sm text-muted-foreground">({safeChordProgressions.length})</span>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="theme" className="text-base font-semibold">
+                        Theme / Mood
+                      </Label>
+                      <Select value={selectedTheme} onValueChange={setSelectedTheme}>
+                        <SelectTrigger id="theme">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(THEMES).map(([key, t]) => (
+                            <SelectItem key={key} value={key}>
+                              {t.name} - {t.description}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <div className="flex gap-2 text-xs text-muted-foreground">
+                        <Badge variant="outline" className="font-mono">{theme.tempo} BPM</Badge>
+                        <Badge variant="outline">Dynamics: {Math.round(theme.dynamics * 100)}%</Badge>
+                      </div>
                     </div>
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+                    <div className="space-y-2">
+                      <Label htmlFor="instrument" className="text-base font-semibold">
+                        Instrument
+                      </Label>
+                      <Select value={selectedInstrument} onValueChange={(v) => setSelectedInstrument(v as InstrumentType)}>
+                        <SelectTrigger id="instrument">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {INSTRUMENTS.map((inst) => (
+                            <SelectItem key={inst.value} value={inst.value}>
+                              {inst.icon} {inst.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="base-key" className="text-base font-semibold">
+                      Base Key (MIDI Note)
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="base-key"
+                        type="number"
+                        min={24}
+                        max={96}
+                        value={baseKey}
+                        onChange={(e) => setBaseKey(parseInt(e.target.value) || 60)}
+                        className="w-24 font-mono"
+                      />
+                      <span className="text-sm text-muted-foreground self-center">
+                        (C4 = 60, Higher = Higher Pitch)
+                      </span>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="flex flex-wrap gap-3">
+                    <Button
+                      onClick={handlePlay}
+                      disabled={isPlaying || !tunePattern.trim()}
+                      size="lg"
+                      className="glow-accent gap-2 flex-1 sm:flex-none"
+                    >
+                      <Play weight="fill" />
+                      Play Music
+                    </Button>
+                    <Button
+                      onClick={handleStop}
+                      disabled={!isPlaying}
+                      variant="secondary"
+                      size="lg"
+                      className="gap-2"
+                    >
+                      <Stop weight="fill" />
+                      Stop
+                    </Button>
+                    <Button
+                      onClick={handleSave}
+                      disabled={isPlaying || !tunePattern.trim()}
+                      variant="outline"
+                      size="lg"
+                      className="gap-2"
+                    >
+                      <FloppyDisk weight="fill" />
+                      Save
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <Card className="border-border/50 bg-muted/30">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <MusicNotes className="text-primary" weight="fill" />
+                    Example Patterns
+                  </CardTitle>
+                  <CardDescription>Click to try these tune patterns</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {examples.map((example, idx) => (
+                      <Button
+                        key={idx}
+                        variant="ghost"
+                        className="justify-start font-mono text-sm h-auto py-2"
+                        onClick={() => loadExample(example)}
+                      >
+                        {example}
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+
+          <div className="lg:col-span-1">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Card className="border-border/50 shadow-lg sticky top-6">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Guitar className="text-accent" weight="fill" />
+                      <CardTitle>Your Library</CardTitle>
+                    </div>
+                    {safeSavedMusic.length > 0 && (
+                      <Badge variant="secondary" className="font-mono">
+                        {safeSavedMusic.length}
+                      </Badge>
+                    )}
+                  </div>
+                  <CardDescription>Saved compositions</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {safeSavedMusic.length === 0 ? (
+                    <div className="text-center py-8">
+                      <MusicNotes size={48} weight="thin" className="mx-auto mb-3 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">
+                        No saved music yet
+                        <br />
+                        Create and save your first piece!
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 max-h-[600px] overflow-y-auto">
                       <AnimatePresence mode="popLayout">
-                        {safeChordProgressions.map((progression) => (
-                          <ChordProgressionCard
-                            key={progression.id}
-                            progression={progression}
-                            onDelete={deleteChordProgression}
-                          />
+                        {safeSavedMusic.map((music) => (
+                          <motion.div
+                            key={music.id}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="p-3 bg-muted/50 rounded-lg border border-border/50 hover:border-accent/50 transition-colors group"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold text-sm truncate font-mono">
+                                  {music.name}
+                                </h4>
+                                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                  <Badge variant="secondary" className="text-xs">
+                                    {INSTRUMENTS.find(i => i.value === music.instrument)?.icon} {music.instrument}
+                                  </Badge>
+                                  <Badge variant="outline" className="text-xs">
+                                    {THEMES[music.theme]?.name || music.theme}
+                                  </Badge>
+                                </div>
+                              </div>
+                              <div className="flex gap-1 flex-shrink-0">
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8"
+                                  onClick={() => handlePlaySaved(music)}
+                                  disabled={isPlaying}
+                                >
+                                  <Play weight="fill" className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  onClick={() => handleDelete(music.id)}
+                                >
+                                  <Trash className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
+                            </div>
+                          </motion.div>
                         ))}
                       </AnimatePresence>
                     </div>
-                  </div>
-                )}
-
-                {safeMelodies.length > 0 && (
-                  <>
-                    {safeChordProgressions.length > 0 && <Separator className="my-8" />}
-                    <div>
-                      <div className="flex items-center gap-2 mb-4">
-                        <Waveform className="text-accent" weight="fill" />
-                        <h2 className="text-2xl font-semibold">Melodies</h2>
-                        <span className="text-sm text-muted-foreground">({safeMelodies.length})</span>
-                      </div>
-                      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        <AnimatePresence mode="popLayout">
-                          {safeMelodies.map((melody) => (
-                            <MelodyCard
-                              key={melody.id}
-                              melody={melody}
-                              onDelete={deleteMelody}
-                            />
-                          ))}
-                        </AnimatePresence>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {safeCompositions.length > 0 && (
-                  <>
-                    {(safeChordProgressions.length > 0 || safeMelodies.length > 0) && <Separator className="my-8" />}
-                    <div>
-                      <div className="flex items-center gap-2 mb-4">
-                        <BookOpen className="text-foreground" weight="fill" />
-                        <h2 className="text-2xl font-semibold">Compositions</h2>
-                        <span className="text-sm text-muted-foreground">({safeCompositions.length})</span>
-                      </div>
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <AnimatePresence mode="popLayout">
-                          {safeCompositions.map((composition) => (
-                            <CompositionCard
-                              key={composition.id}
-                              composition={composition}
-                              onDelete={deleteComposition}
-                            />
-                          ))}
-                        </AnimatePresence>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        </div>
       </div>
     </div>
   )

@@ -1,3 +1,17 @@
+import type { InstrumentType } from './audio-synthesizer'
+import type { ParsedTune } from './tune-parser'
+
+export interface SavedMusic {
+  id: string
+  name: string
+  tunePattern: string
+  parsedTune: ParsedTune
+  instrument: InstrumentType
+  theme: string
+  baseKey: number
+  createdAt: number
+}
+
 export interface ChordProgression {
   id: string
   name: string

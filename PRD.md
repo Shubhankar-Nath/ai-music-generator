@@ -1,63 +1,72 @@
 # Planning Guide
 
-An AI-powered music composition assistant that helps users generate musical ideas, chord progressions, melodies, and complete compositions using advanced music theory knowledge and natural language interactions.
+An AI-powered music synthesis and composition tool that generates actual playable audio from tune patterns, themes, and instrument selections. Users can input simple tune patterns (like "paa paa..para paa paa"), select themes (mood/tempo), choose instruments, and the system generates real synthesized music using Web Audio API.
 
 **Experience Qualities**: 
-1. **Inspiring** - Users should feel creatively energized by the AI suggestions and feel empowered to explore musical concepts they might not have considered
-2. **Educational** - The interface should subtly teach music theory through clear explanations and visual representations of musical concepts
-3. **Playful** - Interactions should feel experimental and fun, encouraging users to try different combinations and styles without fear of making mistakes
+1. **Immediate** - Users should hear their music instantly with real-time audio playback that feels responsive and delightful
+2. **Expressive** - The interface should enable musical creativity through simple inputs, translating intuitive patterns into rich, nuanced sounds
+3. **Playful** - Interactions should feel experimental and fun, encouraging users to try different tune patterns, themes, and instrument combinations without barriers
 
 **Complexity Level**: Light Application (multiple features with basic state)
-This is a focused tool with several interconnected features (chord generation, melody creation, composition tools) that work together, but the core interactions remain straightforward and accessible.
+This is a focused music synthesis tool with tune pattern parsing, audio generation, instrument selection, and playback controls that work together seamlessly.
 
 ## Essential Features
 
-### AI Music Theory Assistant
-- **Functionality**: Generates chord progressions, melodies, and composition suggestions based on user prompts using LLM
-- **Purpose**: Provides intelligent music creation guidance using deep music theory knowledge
-- **Trigger**: User enters a natural language prompt (e.g., "sad piano progression in C minor")
-- **Progression**: User types prompt → AI analyzes request → Generates musical content with theory explanation → User sees results with notation
-- **Success criteria**: Generated content is musically coherent and matches the user's intent; explanations are clear and educational
+### Tune Pattern Parser
+- **Functionality**: Converts text-based tune patterns (e.g., "paa paa..para paa paa") into musical note sequences with rhythm
+- **Purpose**: Enables intuitive music input through phonetic/syllabic patterns
+- **Trigger**: User types tune pattern in the input field
+- **Progression**: User types pattern → Parser analyzes syllables and timing → Converts to notes and durations → Preview shows parsed structure
+- **Success criteria**: Parser accurately interprets common patterns, handles variations, and provides clear visual feedback of the interpretation
 
-### Chord Progression Generator
-- **Functionality**: Creates chord sequences based on key, mood, genre, and complexity
-- **Purpose**: Helps users quickly establish harmonic foundations for compositions
-- **Trigger**: User selects parameters or uses AI prompt
-- **Progression**: User defines constraints → System generates progression → Display chords with Roman numeral analysis → User can regenerate or refine
-- **Success criteria**: Progressions follow music theory rules and sound musically pleasing
+### Audio Synthesis Engine
+- **Functionality**: Generates real-time audio using Web Audio API with multiple instrument voices and effects
+- **Purpose**: Transforms parsed musical data into actual playable sound
+- **Trigger**: User clicks play button or auto-preview is enabled
+- **Progression**: User initiates playback → Engine loads instrument profile → Synthesizes notes with timing → Audio plays through speakers → Visual waveform animates
+- **Success criteria**: Audio plays smoothly without glitches, sounds musical and expressive, timing is accurate
 
-### Melody Generator
-- **Functionality**: Creates melodic lines that fit over chord progressions or standalone
-- **Purpose**: Provides melodic inspiration and demonstrates how melodies interact with harmony
-- **Trigger**: User requests melody with optional chord context
-- **Progression**: User specifies style/scale → AI generates melody → Display as note sequence with rhythm → User can modify parameters
-- **Success criteria**: Melodies are singable/playable and fit the harmonic context
+### Instrument Library
+- **Functionality**: Collection of synthesized instrument profiles (piano, flute, strings, drums, etc.) with realistic timbres
+- **Purpose**: Provides diverse sonic palettes for different musical expressions
+- **Trigger**: User selects instrument from dropdown or multi-select
+- **Progression**: User browses instruments → Previews sound → Selects one or more → Synthesis engine applies instrument characteristics
+- **Success criteria**: Each instrument has distinctive, recognizable sound; multiple instruments can layer together harmoniously
 
-### Music Knowledge Base
-- **Functionality**: Repository of music theory concepts, scales, modes, chord types, and genre characteristics
-- **Purpose**: Enables the AI to generate contextually appropriate and theoretically sound suggestions
-- **Trigger**: Accessed automatically by AI during generation
-- **Progression**: User makes request → System queries knowledge base → Applies relevant theory → Returns informed result
-- **Success criteria**: Generated content demonstrates accurate music theory application
+### Theme/Mood System
+- **Functionality**: Applies tempo, dynamics, articulation, and harmonic characteristics based on selected theme
+- **Purpose**: Automatically enhances the musical output to match desired emotional quality
+- **Trigger**: User selects theme (e.g., "slow and fine", "energetic", "mysterious")
+- **Progression**: User chooses theme → System adjusts tempo, scales, articulation → Generates or modifies music accordingly → User hears themed result
+- **Success criteria**: Themes produce noticeably different musical outputs; adjustments feel appropriate to the theme name
 
-### Composition Workspace
-- **Functionality**: Allows users to save, organize, and refine their generated musical ideas
-- **Purpose**: Provides persistence for creative work and enables iterative refinement
-- **Trigger**: User generates content they want to keep
-- **Progression**: User generates idea → Clicks save → Idea stored in workspace → User can revisit, modify, or combine ideas
-- **Success criteria**: All saved compositions persist between sessions and can be easily managed
+### AI Music Enhancement
+- **Functionality**: Uses LLM to intelligently fill in musical gaps, suggest harmonies, add variation, and enhance user input
+- **Purpose**: Elevates simple patterns into fuller, more sophisticated compositions
+- **Trigger**: Optional enhancement toggle or explicit "enhance" button
+- **Progression**: User creates basic tune → Clicks enhance → AI analyzes pattern → Suggests chord progressions, counter-melodies, arrangements → User accepts or modifies
+- **Success criteria**: Enhancements sound musical and cohesive with the original input; user maintains creative control
+
+### Music Library & Playback
+- **Functionality**: Save generated music pieces, replay them, download as audio files, and organize collections
+- **Purpose**: Provides persistence and enables users to build a portfolio of creations
+- **Trigger**: User saves after generating music
+- **Progression**: User generates music → Clicks save → Names the piece → Stored with all parameters → Can replay, export WAV/MP3, or delete
+- **Success criteria**: All saved music persists between sessions, playback is instant, export produces quality audio files
 
 ## Edge Case Handling
 
-- **Invalid Musical Requests**: When users request impossible combinations (e.g., "major chord in minor key only"), the AI gracefully explains why and suggests alternatives
-- **Empty State**: First-time users see inspiring examples and quick-start prompts to guide initial exploration
-- **Generation Failures**: If AI generation fails, show helpful error with suggestion to rephrase or simplify the request
-- **Long Generation Times**: Display progress indicator and let users cancel if taking too long
-- **Conflicting Parameters**: When user selections conflict (e.g., "happy blues in major"), AI resolves intelligently and explains the choice
+- **Invalid Tune Patterns**: When users enter unrecognizable patterns, show helpful examples and suggest corrections
+- **Empty Inputs**: If no tune/theme/instrument selected, provide quick-start templates and one-click examples
+- **Audio Context Issues**: Handle browser audio permissions and autoplay restrictions gracefully with clear user prompts
+- **Synthesis Errors**: If audio generation fails, fallback to simpler synthesis and notify user
+- **Long Sequences**: Limit tune pattern length to prevent performance issues; show character/note count
+- **Overlapping Playback**: Stop previous audio when starting new playback to avoid cacophony
+- **Browser Compatibility**: Detect Web Audio API support and show helpful message for unsupported browsers
 
 ## Design Direction
 
-The design should evoke the feeling of a sophisticated recording studio or composer's workshop - professional yet inviting, with a sense of creative possibility. It should feel like a premium music production tool that's approachable for beginners but powerful for experienced musicians.
+The design should evoke the feeling of a creative music studio or synthesizer workstation - vibrant and energetic with visual feedback that responds to sound. It should feel both technical (showing waveforms, frequencies) and artistic (flowing animations, color-coded notes), making audio synthesis feel approachable and magical.
 
 ## Color Selection
 
