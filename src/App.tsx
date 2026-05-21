@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Play, Stop, FloppyDisk, Trash, Waveform, MusicNotes, Guitar, Sparkle, Gauge } from '@phosphor-icons/react'
+import { Play, Stop, FloppyDisk, Trash, Waveform, MusicNotes, Guitar, Sparkle, Gauge, SpeakerHigh } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { parseTunePattern, getSyllableExamples } from '@/lib/tune-parser'
@@ -34,6 +34,7 @@ function App() {
   const [selectedInstrument, setSelectedInstrument] = useState<InstrumentType>('piano')
   const [baseKey, setBaseKey] = useState(60)
   const [customTempo, setCustomTempo] = useState(120)
+  const [volume, setVolume] = useState(0.4)
   const [isPlaying, setIsPlaying] = useState(false)
   const [savedMusic, setSavedMusic] = useKV<SavedMusic[]>('saved-music', [])
 
@@ -52,6 +53,10 @@ function App() {
       setCustomTempo(themeData.tempo)
     }
   }, [selectedTheme])
+
+  useEffect(() => {
+    globalSynthesizer.setVolume(volume)
+  }, [volume])
 
   const handlePlay = async () => {
     if (!tunePattern.trim()) {
@@ -298,6 +303,29 @@ function App() {
                     />
                     <p className="text-xs text-muted-foreground">
                       Adjust playback speed (40 BPM = Very Slow, 200 BPM = Very Fast)
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="volume" className="text-base font-semibold flex items-center gap-2">
+                        <SpeakerHigh weight="fill" className="text-accent" />
+                        Volume Control
+                      </Label>
+                      <Badge variant="secondary" className="font-mono">{Math.round(volume * 100)}%</Badge>
+                    </div>
+                    <Slider
+                      id="volume"
+                      value={[volume]}
+                      onValueChange={(val) => setVolume(val[0])}
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      className="w-full"
+                      disabled={isPlaying}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Adjust playback volume (0% = Silent, 100% = Maximum)
                     </p>
                   </div>
 

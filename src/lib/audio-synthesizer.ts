@@ -457,6 +457,16 @@ export class AudioSynthesizer {
   setCompletionCallback(callback: () => void) {
     this.completionCallback = callback
   }
+
+  setVolume(volume: number) {
+    if (this.masterGain) {
+      this.masterGain.gain.value = Math.max(0, Math.min(1, volume))
+    }
+  }
+
+  getVolume(): number {
+    return this.masterGain?.gain.value || 0.4
+  }
 }
 
 export const globalSynthesizer = new AudioSynthesizer()
