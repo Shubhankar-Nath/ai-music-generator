@@ -66,86 +66,86 @@ This is a focused music synthesis tool with tune pattern parsing, audio generati
 
 ## Design Direction
 
-The design should evoke the feeling of a creative music studio or synthesizer workstation - vibrant and energetic with visual feedback that responds to sound. It should feel both technical (showing waveforms, frequencies) and artistic (flowing animations, color-coded notes), making audio synthesis feel approachable and magical.
+The design should evoke the feeling of a cute Korean high school music club - youthful, bright, and cheerful with a soft, friendly aesthetic. Imagine pastel notebooks, cute stickers, bubbly handwriting, and the warm atmosphere of after-school activities. The interface should feel approachable, fun, and kawaii while maintaining functionality.
 
 ## Color Selection
 
-The color scheme draws inspiration from vintage synthesizers and modern DAWs, combining deep, rich backgrounds with vibrant accent colors that feel electric and musical.
+The color scheme draws inspiration from Korean stationery, school uniforms, and youth culture - soft pastels with pops of vibrant color that feel fresh, clean, and energetic.
 
-- **Primary Color**: Deep purple `oklch(0.35 0.15 295)` - Represents creativity, musicality, and sophistication; the primary brand color for buttons and key interactions
-- **Secondary Colors**: Rich navy `oklch(0.25 0.08 250)` for cards and elevated surfaces; warm charcoal `oklch(0.22 0.01 265)` for deeper backgrounds
-- **Accent Color**: Electric cyan `oklch(0.75 0.18 195)` - Attention-grabbing highlight for CTAs, active states, and musical notation elements
+- **Primary Color**: Soft pink `oklch(0.75 0.15 15)` - Represents youth, warmth, and creativity; the primary brand color for main actions and highlights
+- **Secondary Colors**: Sky blue `oklch(0.80 0.10 230)` for cards and complementary elements; cream `oklch(0.95 0.02 85)` for soft backgrounds
+- **Accent Color**: Peach coral `oklch(0.72 0.18 40)` - Cheerful highlight for CTAs, active states, and playful elements
 - **Foreground/Background Pairings**: 
-  - Primary (Deep Purple oklch(0.35 0.15 295)): White text (oklch(0.98 0 0)) - Ratio 7.2:1 ✓
-  - Accent (Electric Cyan oklch(0.75 0.18 195)): Dark navy (oklch(0.20 0.08 250)) - Ratio 8.5:1 ✓
-  - Background (oklch(0.15 0.02 265)): Light text (oklch(0.92 0.01 265)) - Ratio 12.8:1 ✓
+  - Primary (Soft Pink oklch(0.75 0.15 15)): Deep navy (oklch(0.20 0.02 280)) - Ratio 6.8:1 ✓
+  - Accent (Peach Coral oklch(0.72 0.18 40)): Deep navy (oklch(0.20 0.02 280)) - Ratio 6.5:1 ✓
+  - Background (Cream oklch(0.98 0.01 85)): Dark text (oklch(0.25 0.02 280)) - Ratio 14.2:1 ✓
 
 ## Font Selection
 
-Typography should convey technical precision while remaining approachable and modern, reflecting both the mathematical nature of music theory and the creative spirit of composition.
+Typography should be soft, rounded, and friendly - evoking the feeling of cute Korean handwriting and school notes while maintaining readability.
 
 - **Typographic Hierarchy**: 
-  - H1 (Page Title): Space Grotesk Bold / 32px / -0.02em letter spacing
-  - H2 (Section Headers): Space Grotesk Semibold / 24px / -0.01em letter spacing
-  - H3 (Card Titles): Space Grotesk Medium / 18px / normal letter spacing
-  - Body (Descriptions): Inter Regular / 15px / normal letter spacing / 1.6 line height
-  - Musical Notation: JetBrains Mono Medium / 16px / monospace for chords and notes
-  - Labels: Inter Medium / 13px / 0.01em letter spacing / uppercase
+  - H1 (Page Title): Gaegu Bold / 40px / normal letter spacing
+  - H2 (Section Headers): Gaegu Regular / 28px / normal letter spacing
+  - H3 (Card Titles): Gaegu Regular / 20px / normal letter spacing
+  - Body (Descriptions): Noto Sans KR Regular / 15px / normal letter spacing / 1.7 line height
+  - Musical Notation: JetBrains Mono Medium / 16px / monospace for patterns
+  - Labels: Noto Sans KR Medium / 13px / 0.02em letter spacing
 
 ## Animations
 
-Animations should feel smooth and purposeful, like the physical movements of musical instruments and equipment - subtle mechanical precision with moments of expressive flourish.
+Animations should feel bouncy, playful, and cute - like stickers being placed, pages turning, or hearts floating up. Movements should have a slight overshoot (spring physics) that adds to the charm.
 
-- **Content Generation**: Gentle fade-in with slight upward movement (300ms) when AI results appear
-- **Chord/Note Interactions**: Quick scale transform (150ms) on hover, with electric glow effect
-- **Panel Transitions**: Smooth slide animations (400ms) with easing that mimics physical drawer movement
-- **Save Actions**: Satisfying check-mark animation with particle burst effect to celebrate creativity
-- **Loading States**: Pulsing musical note icon with rhythmic timing (beat-based animation)
+- **Content Generation**: Gentle bounce-in from bottom with slight rotation (350ms) when content appears
+- **Button Interactions**: Quick scale-up bounce (120ms) on hover, with soft shadow lift
+- **Panel Transitions**: Playful slide with spring easing (400ms) that slightly overshoots before settling
+- **Save Actions**: Cute heart or star burst animation with celebratory confetti effect
+- **Loading States**: Rotating musical notes with gentle bob animation, feels cheerful and light
+- **Hover Effects**: Subtle float upward movement with soft glow, like highlighting with a marker
 
 ## Component Selection
 
 - **Components**: 
-  - `Card` for chord progression displays and melody results with custom gradient backgrounds
-  - `Input` and `Textarea` for prompt entry with custom focus states using accent color
-  - `Button` extensively with variants for primary (generate), secondary (modify), and ghost (utility actions)
-  - `Tabs` for switching between different generation modes (Chords, Melody, Full Composition)
-  - `Dialog` for detailed music theory explanations and composition tips
-  - `Badge` for displaying musical tags (key, tempo, mood, genre)
-  - `ScrollArea` for the composition workspace and knowledge base browser
-  - `Separator` to divide sections clearly
-  - `Skeleton` for loading states during AI generation
-
+  - `Card` with rounded corners and soft shadows for music displays with pastel gradient backgrounds
+  - `Input` and `Textarea` with cute rounded styling and soft focus states
+  - `Button` with rounded, bubbly appearance and subtle shadows - primary uses pink/peach tones
+  - `Tabs` styled like cute notebook tabs or sticky notes
+  - `Dialog` for tips and help with friendly, encouraging language
+  - `Badge` for displaying music info, styled like colorful school stickers
+  - `ScrollArea` for the composition workspace
+  - `Separator` as dotted or dashed lines, like notebook paper
+  
 - **Customizations**: 
-  - Custom "Musical Card" component that extends Card with notation display capabilities
-  - Custom "Chord Display" component showing chord symbols with Roman numeral analysis
-  - Custom "Prompt Builder" component with smart suggestions and autocomplete
-  - Loading animation using phosphor musical note icons
+  - Custom pastel gradient backgrounds with subtle patterns (dots, stripes, or grid like school notebook paper)
+  - Rounded corners everywhere (large radius for softness)
+  - Soft drop shadows instead of harsh borders
+  - Cute emoji and icon combinations throughout
+  - Decorative elements like stars, hearts, and music note doodles
 
 - **States**: 
-  - Buttons: Default has subtle gradient, hover adds glow effect, active scales down slightly, disabled shows muted colors
-  - Inputs: Focus state includes electric cyan glow and subtle border pulse
-  - Cards: Hover lifts with shadow increase, selected state has accent border glow
-  - Generated content: Appears with stagger animation, each chord/note animates in sequence
+  - Buttons: Default has soft pastel gradient, hover bounces slightly and glows, active squishes down, disabled shows light gray
+  - Inputs: Focus state includes soft pink/peach glow with gentle pulse animation
+  - Cards: Hover lifts gently with increased soft shadow, like lifting a piece of paper
+  - Generated content: Appears with playful bounce animation, staggered timing
 
 - **Icon Selection**: 
-  - `MusicNotes` for main app icon and musical content
-  - `Lightning` for AI generation triggers
-  - `Waveform` for melody and audio visualization
-  - `Faders` for mixing and parameter adjustment
-  - `BookOpen` for knowledge base and theory reference
-  - `FloppyDisk` for saving compositions
-  - `Sparkle` for AI-powered features
-  - `Play` for preview actions
+  - `Heart` and `Sparkle` for favorites and special features
+  - `Smiley` for friendly interactions
+  - `MusicNotes` with filled weight for musical content
+  - `Star` for ratings and highlights
+  - `FloppyDisk` for saving
+  - `Play` with filled weight for playback
+  - All icons use soft, rounded filled style when available
 
 - **Spacing**: 
-  - Page padding: `p-6` on mobile, `p-8` on desktop
-  - Card padding: `p-6` consistently
-  - Component gaps: `gap-4` for related items, `gap-8` for distinct sections
-  - Grid layouts: `gap-6` for card grids
+  - Page padding: `p-4` on mobile, `p-6` on tablet, `p-8` on desktop
+  - Card padding: `p-5` to `p-6` consistently for comfort
+  - Component gaps: `gap-3` for tight grouping, `gap-6` for section separation
+  - Grid layouts: `gap-4` for cozy card grids
 
 - **Mobile**: 
-  - Stack tabs vertically on mobile instead of horizontal layout
-  - Single column layout for cards on mobile, 2-3 columns on tablet/desktop
-  - Bottom sheet drawer for composition workspace instead of side panel
-  - Larger touch targets (48px minimum) for all interactive musical elements
-  - Collapsible knowledge base section that expands on demand
+  - Stack everything vertically with generous spacing
+  - Large, friendly touch targets (min 48px)
+  - Bottom navigation if needed, styled like app tabs
+  - Cards take full width on mobile for easy reading
+  - Collapsible sections with cute icons to indicate state
