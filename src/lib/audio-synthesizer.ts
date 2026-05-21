@@ -58,6 +58,7 @@ export const THEMES: Record<string, Theme> = {
 export class AudioSynthesizer {
   private audioContext: AudioContext | null = null
   private masterGain: GainNode | null = null
+  private analyser: AnalyserNode | null = null
   private isPlaying = false
   private scheduledNotes: { source: OscillatorNode; envelope: GainNode }[] = []
 
@@ -66,7 +67,12 @@ export class AudioSynthesizer {
       this.audioContext = new AudioContext()
       this.masterGain = this.audioContext.createGain()
       this.masterGain.gain.value = 0.4
-      this.masterGain.connect(this.audioContext.destination)
+      
+      this.analyser = this.audioContext.createAnalyser()
+      this.analyser.fftSize = 2048
+      
+      this.masterGain.connect(this.analyser)
+      this.analyser.connect(this.audioContext.destination)
     }
   }
 
@@ -310,8 +316,115 @@ export class AudioSynthesizer {
     return 440 * Math.pow(2, (midiNote - 69) / 12)
   }
 
+  async playLayeredSequence(
+    notes: ParsedNote[],
+    instrument: InstrumentType,
+    theme: Theme,
+    baseKey = 60,
+    volume = 1.0
+  ): Promise<void> {
+    if (!this.audioContext || !this.masterGain) {
+      throw new Error('Audio context not initialized')
+    }
+
+    await this.init()
+    this.isPlaying = true
+
+    const layerGain = this.audioContext.createGain()
+    layerGain.gain.value = volume * 0.4
+    layerGain.connect(this.masterGain)
+
+    const beatDuration = 60 / theme.tempo
+    let currentTime = this.audioContext.currentTime + 0.1
+
+    for (let i = 0; i < notes.length; i++) {
+      if (!this.isPlaying) break
+
+      const note = notes[i]
+      const frequency = this.midiToFreq(baseKey + note.pitch)
+      const duration = note.duration * beatDuration
+
+      this.playNoteToTarget(
+        frequency,
+        duration,
+        currentTime,
+        instrument,
+        theme.dynamics,
+        theme.reverb,
+        layerGain
+      )
+
+      currentTime += duration
+    }
+  }
+
+  private playNoteToTarget(
+    frequency: number,
+    duration: number,
+    startTime: number,
+    instrument: InstrumentType,
+    dynamics: number,
+    reverbAmount: number,
+    targetNode: AudioNode
+  ) {
+    if (!this.audioContext) return
+
+    const oscillator = this.audioContext.createOscillator()
+    const envelope = this.audioContext.createGain()
+    const filter = this.audioContext.createBiquadFilter()
+    
+    const instrumentConfig = this.getInstrumentConfig(instrument)
+    
+    oscillator.type = instrumentConfig.waveform
+    oscillator.frequency.setValueAtTime(frequency, startTime)
+
+    if (instrumentConfig.detune) {
+      oscillator.detune.setValueAtTime(instrumentConfig.detune, startTime)
+    }
+
+    filter.type = instrumentConfig.filterType
+    filter.frequency.setValueAtTime(instrumentConfig.filterFreq, startTime)
+    filter.Q.setValueAtTime(instrumentConfig.filterQ, startTime)
+
+    oscillator.connect(envelope)
+    envelope.connect(filter)
+    filter.connect(targetNode)
+
+    const attackTime = instrumentConfig.attack
+    const decayTime = instrumentConfig.decay
+    const sustainLevel = instrumentConfig.sustain * dynamics
+    const releaseTime = instrumentConfig.release
+
+    envelope.gain.setValueAtTime(0, startTime)
+    envelope.gain.linearRampToValueAtTime(dynamics, startTime + attackTime)
+    envelope.gain.linearRampToValueAtTime(
+      sustainLevel,
+      startTime + attackTime + decayTime
+    )
+    envelope.gain.setValueAtTime(
+      sustainLevel,
+      startTime + duration - releaseTime
+    )
+    envelope.gain.linearRampToValueAtTime(0, startTime + duration)
+
+    oscillator.start(startTime)
+    oscillator.stop(startTime + duration + 0.1)
+
+    this.scheduledNotes.push({ source: oscillator, envelope })
+
+    oscillator.onended = () => {
+      oscillator.disconnect()
+      envelope.disconnect()
+      filter.disconnect()
+    }
+  }
+
   getContext(): AudioContext | null {
     return this.audioContext
+  }
+
+  getAnalyser(): AnalyserNode | null {
+    return this.analyser
   }
 
   isCurrentlyPlaying(): boolean {
