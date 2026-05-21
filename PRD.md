@@ -27,11 +27,11 @@ This is a focused music synthesis tool with tune pattern parsing, audio generati
 - **Success criteria**: Audio plays smoothly without glitches, sounds musical and expressive, timing is accurate
 
 ### Instrument Library
-- **Functionality**: Collection of synthesized instrument profiles (piano, flute, strings, drums, etc.) with realistic timbres
-- **Purpose**: Provides diverse sonic palettes for different musical expressions
+- **Functionality**: Collection of synthesized instrument profiles including traditional (piano, flute, strings, guitar, bass, organ), percussive (drum), and electric effects (electric, wobble, echo, laser) with distinctive timbres
+- **Purpose**: Provides diverse sonic palettes for different musical expressions, from classical to experimental electronic sounds
 - **Trigger**: User selects instrument from dropdown or multi-select
 - **Progression**: User browses instruments → Previews sound → Selects one or more → Synthesis engine applies instrument characteristics
-- **Success criteria**: Each instrument has distinctive, recognizable sound; multiple instruments can layer together harmoniously
+- **Success criteria**: Each instrument has distinctive, recognizable sound; traditional instruments sound organic while electric effects provide creative electronic textures; multiple instruments can layer together harmoniously
 
 ### Theme/Mood System
 - **Functionality**: Applies tempo, dynamics, articulation, and harmonic characteristics based on selected theme

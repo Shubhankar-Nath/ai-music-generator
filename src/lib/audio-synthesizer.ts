@@ -1,6 +1,6 @@
 import type { ParsedNote } from './tune-parser'
 
-export type InstrumentType = 'piano' | 'flute' | 'strings' | 'synth' | 'guitar' | 'bass' | 'organ'
+export type InstrumentType = 'piano' | 'flute' | 'strings' | 'synth' | 'guitar' | 'bass' | 'organ' | 'drum' | 'electric' | 'wobble' | 'echo' | 'laser'
 
 export interface Theme {
   name: string
@@ -231,7 +231,17 @@ export class AudioSynthesizer {
   }
 
   private getInstrumentConfig(instrument: InstrumentType) {
-    const configs = {
+    const configs: Record<InstrumentType, {
+      waveform: OscillatorType;
+      attack: number;
+      decay: number;
+      sustain: number;
+      release: number;
+      filterType: BiquadFilterType;
+      filterFreq: number;
+      filterQ: number;
+      detune: number;
+    }> = {
       piano: {
         waveform: 'triangle' as OscillatorType,
         attack: 0.01,
@@ -308,6 +318,61 @@ export class AudioSynthesizer {
         filterFreq: 4000,
         filterQ: 1,
         detune: 0,
+      },
+      drum: {
+        waveform: 'triangle' as OscillatorType,
+        attack: 0.001,
+        decay: 0.05,
+        sustain: 0.1,
+        release: 0.08,
+        filterType: 'lowpass' as BiquadFilterType,
+        filterFreq: 200,
+        filterQ: 8,
+        detune: -1200,
+      },
+      electric: {
+        waveform: 'sawtooth' as OscillatorType,
+        attack: 0.005,
+        decay: 0.08,
+        sustain: 0.7,
+        release: 0.12,
+        filterType: 'bandpass' as BiquadFilterType,
+        filterFreq: 3500,
+        filterQ: 15,
+        detune: 50,
+      },
+      wobble: {
+        waveform: 'square' as OscillatorType,
+        attack: 0.01,
+        decay: 0.15,
+        sustain: 0.5,
+        release: 0.2,
+        filterType: 'lowpass' as BiquadFilterType,
+        filterFreq: 1200,
+        filterQ: 20,
+        detune: 25,
+      },
+      echo: {
+        waveform: 'sine' as OscillatorType,
+        attack: 0.08,
+        decay: 0.2,
+        sustain: 0.4,
+        release: 0.5,
+        filterType: 'highpass' as BiquadFilterType,
+        filterFreq: 800,
+        filterQ: 3,
+        detune: 12,
+      },
+      laser: {
+        waveform: 'sawtooth' as OscillatorType,
+        attack: 0.001,
+        decay: 0.03,
+        sustain: 0.2,
+        release: 0.05,
+        filterType: 'highpass' as BiquadFilterType,
+        filterFreq: 4000,
+        filterQ: 10,
+        detune: 100,
       },
     }
 

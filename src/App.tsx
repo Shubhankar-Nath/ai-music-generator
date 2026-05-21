@@ -26,6 +26,11 @@ const INSTRUMENTS: { value: InstrumentType; label: string; icon: string }[] = [
   { value: 'guitar', label: 'Guitar', icon: '🎸' },
   { value: 'bass', label: 'Bass', icon: '🎸' },
   { value: 'organ', label: 'Organ', icon: '🎹' },
+  { value: 'drum', label: 'Drum', icon: '🥁' },
+  { value: 'electric', label: 'Electric', icon: '⚡' },
+  { value: 'wobble', label: 'Wobble', icon: '🌀' },
+  { value: 'echo', label: 'Echo', icon: '🔊' },
+  { value: 'laser', label: 'Laser', icon: '✨' },
 ]
 
 function App() {
